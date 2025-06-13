@@ -8,14 +8,15 @@ import {
   Description as DescriptionIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate ,useLocation } from 'react-router-dom';
 
 const DRAWER_WIDTH = 240;
 
 const MainLayout: React.FC = () => {
-  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [mobileOpen, setMobileOpen] = React.useState(false); 
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation(); 
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
@@ -31,7 +32,10 @@ const MainLayout: React.FC = () => {
   const drawer = (
     <Box sx={{ mt: 2 }}>
       <List>
-        {menuItems.map((item) => (
+        {menuItems.map((item) => {
+          
+        const isActive = location.pathname === item.path;
+        return (
           <ListItemButton
             key={item.text}
             onClick={() => {
@@ -39,11 +43,15 @@ const MainLayout: React.FC = () => {
               setMobileOpen(false);
             }}
             sx={{
+              backgroundColor: isActive ? theme.palette.primary.main : 'transparent',
               '&:hover': {
                 backgroundColor: theme.palette.primary.light,
                 '& .MuiListItemIcon-root, & .MuiListItemText-primary': {
                   color: 'white',
                 },
+              },
+              '& .MuiListItemIcon-root, & .MuiListItemText-primary': {
+                color: isActive ? 'white' : theme.palette.text.primary, 
               },
             }}
           >
@@ -52,7 +60,7 @@ const MainLayout: React.FC = () => {
             </ListItemIcon>
             <ListItemText primary={item.text} />
           </ListItemButton>
-        ))}
+        )})}
       </List>
     </Box>
   );

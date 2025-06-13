@@ -12,7 +12,7 @@ export const setupRoutes = (app: Express): void => {
   app.use("/api", customerRoutes);
 
   // Mount profile enrichment routes
-  // app.use("/api", profileEnrichmentRoutes);
+  app.use("/api", profileEnrichmentRoutes);
 
   // Health check endpoint
   app.get("/health", (_, res) => res.status(200).json({ status: "ok" }));

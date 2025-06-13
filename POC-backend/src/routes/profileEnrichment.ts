@@ -33,12 +33,12 @@ const customerProfileSchema = z.object({
 });
 
 router.post("/enrich", async (req, res) => {
+  console.log("req.body", req.body);
   try {
     // Validate request body
     const validatedData = customerProfileSchema.parse(req.body);
 
     let linfa = validatedData + " site:linkedin.com";
-    // Enrich the profile with public information
     const enrichedProfile = await profileEnrichmentService.enrichProfile(
       validatedData
     );
@@ -47,6 +47,7 @@ router.post("/enrich", async (req, res) => {
       success: true,
       data: enrichedProfile,
     });
+    console.log("first", JSON.stringify(enrichedProfile));
   } catch (error) {
     console.error("Profile enrichment error:", error);
 

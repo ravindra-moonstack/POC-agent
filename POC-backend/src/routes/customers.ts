@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { Customer } from "../models/Customer";
-import { profileEnrichmentService } from "../services/profileEnrichment";
+import { ProfileEnrichmentService } from "../services/profileEnrichment";
 import { z } from "zod";
 import { Types } from "mongoose";
 
 const router = Router();
+const profileEnrichmentService = new ProfileEnrichmentService();
 
 // Validation schema for customer creation/update
 const customerSchema = z.object({
@@ -84,13 +85,12 @@ router.post("/customer", async (req, res) => {
 
     // Try to enrich the profile
     try {
-      const { enrichedProfile } =
-        await profileEnrichmentService.enrichCustomerProfile({
-          _id: newCustomer._id as Types.ObjectId,
-          name: newCustomer.name,
-          email: newCustomer.email,
-          companyOwnership: newCustomer.companyOwnership,
-        });
+      const enrichedProfile = await profileEnrichmentService.enrichProfile({
+        _id: newCustomer._id as Types.ObjectId,
+        name: newCustomer.name,
+        email: newCustomer.email,
+        companyOwnership: newCustomer.companyOwnership,
+      });
 
       newCustomer.enrichedProfile = enrichedProfile;
       await newCustomer.save();
@@ -124,19 +124,16 @@ router.put("/customer/:customerId", async (req, res) => {
 
     // Update customer data
     Object.assign(customer, validatedData);
-    console.log("customer", customer);
 
     // Try to re-enrich the profile if significant fields changed
     if (validatedData.name || validatedData.companyOwnership) {
       try {
-        const { enrichedProfile } =
-          await profileEnrichmentService.enrichCustomerProfile({
-            _id: customer._id as Types.ObjectId,
-            name: customer.name,
-            email: customer.email,
-            companyOwnership: customer.companyOwnership,
-          });
-        console.log("enrichedProfile", enrichedProfile);
+        const enrichedProfile = await profileEnrichmentService.enrichProfile({
+          _id: customer._id as Types.ObjectId,
+          name: customer.name,
+          email: customer.email,
+          companyOwnership: customer.companyOwnership,
+        });
         customer.enrichedProfile = enrichedProfile;
       } catch (error) {
         console.error("Profile re-enrichment failed:", error);
@@ -167,13 +164,12 @@ router.get("/customer/:customerId", async (req, res) => {
       return res.status(404).json({ error: "Customer not found" });
     }
     try {
-      const { enrichedProfile } =
-        await profileEnrichmentService.enrichCustomerProfile({
-          _id: customer._id as Types.ObjectId,
-          name: customer.name,
-          email: customer.email,
-          companyOwnership: customer.companyOwnership,
-        });
+      const enrichedProfile = await profileEnrichmentService.enrichProfile({
+        _id: customer._id as Types.ObjectId,
+        name: customer.name,
+        email: customer.email,
+        companyOwnership: customer.companyOwnership,
+      });
       customer.enrichedProfile = enrichedProfile;
       await customer.save();
     } catch (error) {
@@ -186,6 +182,7 @@ router.get("/customer/:customerId", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch customer" });
   }
 });
+
 // Delete customer
 router.delete("/customer/:customerId", async (req, res) => {
   try {
@@ -212,13 +209,12 @@ router.post("/profiles/enrich/:customerId", async (req, res) => {
       return res.status(404).json({ error: "Customer not found" });
     }
 
-    const { enrichedProfile } =
-      await profileEnrichmentService.enrichCustomerProfile({
-        _id: customer._id as Types.ObjectId,
-        name: customer.name,
-        email: customer.email,
-        companyOwnership: customer.companyOwnership,
-      });
+    const enrichedProfile = await profileEnrichmentService.enrichProfile({
+      _id: customer._id as Types.ObjectId,
+      name: customer.name,
+      email: customer.email,
+      companyOwnership: customer.companyOwnership,
+    });
     customer.enrichedProfile = enrichedProfile;
     await customer.save();
 

@@ -160,12 +160,13 @@ export class ProfileEnrichmentService {
       const searchQueries = this.generateSearchQueries(baseProfile);
 
       // Perform searches in parallel
-      const [linkedInData, newsData, socialData, companyData] =
+      const [linkedInData, newsData, socialData, companyData, wikipediaData] =
         await Promise.all([
           this.searchLinkedInProfile(searchQueries.linkedin),
           this.searchNewsAndMedia(searchQueries.news),
           this.searchSocialProfiles(searchQueries.social),
           this.searchCompanyInfo(searchQueries.company),
+          this.searchWikipedia(searchQueries.wikipedia),
         ]);
 
       // Enrich the profile with found data
@@ -173,6 +174,7 @@ export class ProfileEnrichmentService {
       this.enrichWithNewsData(enrichedProfile, newsData);
       this.enrichWithSocialData(enrichedProfile, socialData);
       this.enrichWithCompanyData(enrichedProfile, companyData);
+      this.enrichWithWikipediaData(enrichedProfile, wikipediaData);
 
       return enrichedProfile;
     } catch (error) {
@@ -186,6 +188,7 @@ export class ProfileEnrichmentService {
     news: string;
     social: string;
     company: string;
+    wikipedia: string;
   } {
     const nameQuery = encodeURIComponent(profile.name);
     const companyQuery = profile.companyOwnership?.[0]?.companyName
@@ -199,6 +202,7 @@ export class ProfileEnrichmentService {
       company: companyQuery
         ? `${companyQuery} company information funding`
         : "",
+      wikipedia: `${nameQuery} ${companyQuery}`,
     };
   }
 
@@ -223,6 +227,13 @@ export class ProfileEnrichmentService {
   private async searchCompanyInfo(query: string): Promise<any> {
     if (!query) return null;
     const url = `https://serpapi.com/search.json?engine=google&q=${query}&api_key=${this.serpApiKey}`;
+    const response = await axios.get(url);
+    return response.data.organic_results || [];
+  }
+
+  private async searchWikipedia(query: string): Promise<any> {
+    if (!query) return null;
+    const url = `https://serpapi.com/search.json?engine=wikipedia&q=${query}&api_key=${this.serpApiKey}`;
     const response = await axios.get(url);
     return response.data.organic_results || [];
   }
@@ -312,7 +323,17 @@ export class ProfileEnrichmentService {
       ];
     }
   }
+  private enrichWithWikipediaData(profile: EnrichedProfile, data: any[]): void {
+    if (!data?.length) return;
 
+    const wiki = data[0];
+    if (wiki) {
+      profile.basicInfo.shortBio ??= wiki.snippet;
+      profile.basicInfo.currentLocation ??= wiki.title.includes("from")
+        ? wiki.title.split("from").pop()?.trim()
+        : undefined;
+    }
+  }
   private detectPlatform(url: string): string {
     const hostname = new URL(url).hostname;
     return hostname.split(".")[1] || hostname;

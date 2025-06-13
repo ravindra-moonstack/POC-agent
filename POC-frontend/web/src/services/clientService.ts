@@ -172,7 +172,7 @@ export const customerService = {
   enrichCustomerProfile: async (customerId: string) => {
     try {
       const response = await api.post<Customer>(
-        `/api/profiles/enrich/${customerId}`
+        `/api/profile/enrich/${customerId}`
       );
       return response.data;
     } catch (error) {

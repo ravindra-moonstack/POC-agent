@@ -149,7 +149,7 @@ export class ProfileEnrichmentService {
           api_key: config.SERP_API_KEY,
           engine: "google",
           q: linkedInQuery.trim(),
-          num: 10,
+          num: 5,
         },
       });
 
@@ -348,121 +348,67 @@ export class ProfileEnrichmentService {
     }
 
     try {
-      // Multiple targeted searches with specific queries
-      const searches = [
-        {
-          q: `${name} latest news articles interviews 2024 2025`,
-          type: "news",
-        },
-        {
-          q: `${name} twitter X social media official account`,
-          type: "social",
-        },
-        {
-          q: `${name} achievements awards recognition career highlights`,
-          type: "achievements",
-        },
-        {
-          q: `${name} biography background education career`,
-          type: "background",
-        },
-        {
-          q: `${name} skills expertise specialties professional experience`,
-          type: "skills",
-        },
-        {
-          q: `${name} technologies tools programming languages frameworks`,
-          type: "technical_skills",
-        },
-        {
-          q: `${name} leadership management business entrepreneurship`,
-          type: "business_skills",
-        },
-      ];
+      // Combine multiple queries into a single search to reduce API calls
+      const combinedQuery = `${name} ${
+        location || ""
+      } (profile OR bio OR career OR background OR achievements OR skills OR expertise OR news OR interview OR article)`;
 
-      const results = await Promise.all(
-        searches.map((search) =>
-          axios.get("https://serpapi.com/search.json", {
-            params: {
-              api_key: config.SERP_API_KEY,
-              engine: "google",
-              q: search.q.trim(),
-              num: 10,
-            },
-          })
-        )
+      const response = await axios.get("https://serpapi.com/search.json", {
+        params: {
+          api_key: config.SERP_API_KEY,
+          engine: "google",
+          q: combinedQuery.trim(),
+          num: 20, // Increased number of results to compensate for combined query
+        },
+        timeout: 10000, // 10 second timeout
+      });
+
+      // Check for rate limiting
+      if (response.status === 429) {
+        console.warn("SerpAPI rate limit reached, returning empty results");
+        return {
+          professional: {
+            jobHistory: [],
+            education: [],
+          },
+          social: {},
+        };
+      }
+
+      const results = response.data.organic_results || [];
+
+      // Extract different types of information from the combined results
+      const newsResults = results.filter(
+        (result) =>
+          result.snippet?.toLowerCase().includes("news") ||
+          result.snippet?.toLowerCase().includes("article") ||
+          result.snippet?.toLowerCase().includes("interview")
       );
 
-      const newsResults = results[0].data.organic_results || [];
-      const socialResults = results[1].data.organic_results || [];
-      const achievementResults = results[2].data.organic_results || [];
-      const backgroundResults = results[3].data.organic_results || [];
-      const skillsResults = results[4].data.organic_results || [];
-      const technicalResults = results[5].data.organic_results || [];
-      const businessResults = results[6].data.organic_results || [];
+      const socialResults = results.filter(
+        (result) =>
+          result.link?.includes("twitter.com") ||
+          result.link?.includes("github.com") ||
+          result.link?.includes("linkedin.com")
+      );
 
-      // Combine all skills-related results
-      const allSkillsResults = [
-        ...skillsResults,
-        ...technicalResults,
-        ...businessResults,
-      ];
+      const achievementResults = results.filter(
+        (result) =>
+          result.snippet?.toLowerCase().includes("award") ||
+          result.snippet?.toLowerCase().includes("achievement") ||
+          result.snippet?.toLowerCase().includes("recognition")
+      );
+
+      const backgroundResults = results.filter(
+        (result) =>
+          result.snippet?.toLowerCase().includes("career") ||
+          result.snippet?.toLowerCase().includes("background") ||
+          result.snippet?.toLowerCase().includes("education")
+      );
 
       // Extract skills with multiple patterns
       const skills = new Set<string>();
-
-      // Extract social media profiles
-      const social: any = {};
-      socialResults.forEach((result) => {
-        const { link, snippet, title } = result;
-
-        // Twitter/X matching
-        if (link.includes("twitter.com") || link.includes("x.com")) {
-          const handle = link.split("/").filter(Boolean).pop();
-          if (
-            handle &&
-            ![
-              "with_replies",
-              "media",
-              "likes",
-              "following",
-              "followers",
-              "highlights",
-            ].includes(handle)
-          ) {
-            social.twitter = {
-              handle,
-              url: link.split("?")[0], // Remove query parameters
-              bio: snippet,
-            };
-          }
-        }
-        // GitHub matching
-        else if (link.includes("github.com")) {
-          const username = link.split("/").filter(Boolean).pop();
-          if (username) {
-            social.github = {
-              username,
-              url: link.split("?")[0], // Remove query parameters
-            };
-          }
-        }
-      });
-
-      // Extract news articles and media presence
-      const mediaPresence = {
-        newsArticles: newsResults.map((result) => ({
-          title: result.title,
-          source: result.source || this.extractSource(result.link) || "Web",
-          date: result.date || new Date().toISOString().split("T")[0],
-          url: result.link,
-          snippet: result.snippet,
-        })),
-        interviews: [],
-        publications: [],
-      };
-
-      allSkillsResults.forEach((result) => {
+      results.forEach((result) => {
         const content = `${result.title} ${result.snippet}`.toLowerCase();
 
         // Pattern 1: Direct skills mentions
@@ -512,40 +458,65 @@ export class ProfileEnrichmentService {
             }
           }
         }
+      });
 
-        // Pattern 4: Industry expertise
-        const industryPattern =
-          /(industry experience|sector expertise|market knowledge) in ([^.!?]+)/gi;
-        const industryMatches = content.matchAll(industryPattern);
-        for (const match of industryMatches) {
-          if (match[2]) {
-            match[2]
-              .split(/[,&]/)
-              .map((industry) => industry.trim())
-              .filter((industry) => industry.length > 2)
-              .forEach((industry) =>
-                skills.add(`Industry expertise: ${industry}`)
-              );
+      // Extract social media profiles
+      const social: any = {};
+      socialResults.forEach((result) => {
+        const { link, snippet, title } = result;
+
+        // Twitter/X matching
+        if (link.includes("twitter.com") || link.includes("x.com")) {
+          const handle = link.split("/").filter(Boolean).pop();
+          if (
+            handle &&
+            ![
+              "with_replies",
+              "media",
+              "likes",
+              "following",
+              "followers",
+              "highlights",
+            ].includes(handle)
+          ) {
+            social.twitter = {
+              handle,
+              url: link.split("?")[0], // Remove query parameters
+              bio: snippet,
+            };
+          }
+        }
+        // GitHub matching
+        else if (link.includes("github.com")) {
+          const username = link.split("/").filter(Boolean).pop();
+          if (username) {
+            social.github = {
+              username,
+              url: `https://github.com/${username}`,
+            };
           }
         }
       });
 
-      // Extract achievements with better filtering
-      const achievements = achievementResults
-        .filter(
-          (result) =>
-            result.snippet &&
-            (result.snippet.toLowerCase().includes("award") ||
-              result.snippet.toLowerCase().includes("achievement") ||
-              result.snippet.toLowerCase().includes("recognition") ||
-              result.snippet.toLowerCase().includes("honor") ||
-              result.snippet.toLowerCase().includes("prize"))
-        )
-        .map((result) => ({
+      // Extract news articles and media presence
+      const mediaPresence = {
+        newsArticles: newsResults.map((result) => ({
           title: result.title,
-          description: result.snippet,
-          date: this.extractDate(result.snippet) || result.date,
-        }));
+          source: result.source || this.extractSource(result.link) || "Web",
+          date: result.date || new Date().toISOString().split("T")[0],
+          url: result.link,
+          snippet: result.snippet,
+        })),
+        interviews: [],
+        publications: [],
+      };
+
+      // Extract achievements
+      const achievements = achievementResults.map((result) => ({
+        title: result.title,
+        description: result.snippet,
+        date: this.extractDate(result.snippet) || result.date,
+      }));
 
       // Extract interests and activities
       const interests = {
@@ -572,7 +543,20 @@ export class ProfileEnrichmentService {
         interests,
       };
     } catch (error) {
-      console.error("Google Search API error:", error);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 429) {
+          console.warn("SerpAPI rate limit reached, returning empty results");
+        } else if (error.response?.status === 401) {
+          console.error("Invalid SerpAPI key");
+        } else if (error.code === "ECONNABORTED") {
+          console.error("SerpAPI request timed out");
+        } else {
+          console.error("SerpAPI request failed:", error.message);
+        }
+      } else {
+        console.error("Unexpected error during Google search:", error);
+      }
+
       return {
         professional: {
           jobHistory: [],
@@ -749,69 +733,12 @@ export class ProfileEnrichmentService {
           },
         };
       }
-
-      // Extract media mentions
-      if (
-        content.toLowerCase().includes("news") ||
-        content.toLowerCase().includes("article")
-      ) {
-        info.mediaPresence!.newsArticles.push({
-          title: result.title,
-          source: result.source || "Web",
-          date: result.date || new Date().toISOString().split("T")[0],
-          url: result.url || "",
-          snippet: result.snippet,
-        });
-      }
-
-      // Extract publications
-      if (
-        content.toLowerCase().includes("published") ||
-        content.toLowerCase().includes("publication")
-      ) {
-        info.mediaPresence!.publications.push({
-          title: result.title,
-          platform: result.publisher || result.source || "Unknown",
-          date: result.date || new Date().toISOString().split("T")[0],
-          url: result.url || "",
-          type: result.type || "article",
-        });
-      }
     });
 
     return info;
   }
 
-  private async cacheEnrichmentResult(
-    customerId: string,
-    result: EnrichmentResult
-  ): Promise<void> {
-    try {
-      await redis.setex(
-        `profile_enrichment:${customerId}`,
-        CACHE_TTL,
-        JSON.stringify(result)
-      );
-    } catch (error) {
-      // Log error but continue - caching is not critical for functionality
-      console.warn("Failed to cache enrichment result:", error);
-    }
-  }
-
-  private async getCachedEnrichmentResult(
-    customerId: string
-  ): Promise<EnrichmentResult | null> {
-    try {
-      const cached = await redis.get(`profile_enrichment:${customerId}`);
-      return cached ? JSON.parse(cached) : null;
-    } catch (error) {
-      // Log error but continue - caching is not critical for functionality
-      console.warn("Failed to get cached enrichment result:", error);
-      return null;
-    }
-  }
-
-  public async enrichCustomerProfile(customer: {
+  async enrichProfile(profile: {
     _id: Types.ObjectId;
     name: string;
     email?: string;
@@ -820,85 +747,83 @@ export class ProfileEnrichmentService {
       role: string;
       ownershipPercentage?: number;
     }>;
-  }): Promise<{
-    enrichedProfile: EnrichmentResult;
-  }> {
-    // Check cache first
-    const cached = await this.getCachedEnrichmentResult(
-      customer._id.toString()
-    );
-    if (cached) {
-      return {
-        enrichedProfile: cached,
+  }): Promise<EnrichmentResult> {
+    try {
+      // Get current company if available
+      const currentCompany = profile.companyOwnership?.[0]?.companyName;
+
+      // Search LinkedIn and Google in parallel
+      const [linkedInData, googleData] = await Promise.all([
+        this.searchLinkedIn(profile.name, currentCompany),
+        this.searchGoogle(profile.name),
+      ]);
+
+      // Merge the results
+      const enrichedProfile: EnrichmentResult = {
+        basicInfo: {
+          name: profile.name,
+          ...linkedInData.basicInfo,
+          ...googleData.basicInfo,
+        },
+        professional: {
+          currentRole:
+            linkedInData.professional?.currentRole ||
+            googleData.professional?.currentRole,
+          jobHistory: [
+            ...(linkedInData.professional?.jobHistory || []),
+            ...(googleData.professional?.jobHistory || []),
+          ],
+          education: [
+            ...(linkedInData.professional?.education || []),
+            ...(googleData.professional?.education || []),
+          ],
+          skills: [
+            ...(linkedInData.professional?.skills || []),
+            ...(googleData.professional?.skills || []),
+          ],
+          achievements: [
+            ...(linkedInData.professional?.achievements || []),
+            ...(googleData.professional?.achievements || []),
+          ],
+        },
+        social: {
+          ...linkedInData.social,
+          ...googleData.social,
+        },
+        mediaPresence: {
+          newsArticles: [
+            ...(linkedInData.mediaPresence?.newsArticles || []),
+            ...(googleData.mediaPresence?.newsArticles || []),
+          ],
+          interviews: [
+            ...(linkedInData.mediaPresence?.interviews || []),
+            ...(googleData.mediaPresence?.interviews || []),
+          ],
+          publications: [
+            ...(linkedInData.mediaPresence?.publications || []),
+            ...(googleData.mediaPresence?.publications || []),
+          ],
+        },
+        interests: {
+          topics: [
+            ...(linkedInData.interests?.topics || []),
+            ...(googleData.interests?.topics || []),
+          ],
+          hobbies: [
+            ...(linkedInData.interests?.hobbies || []),
+            ...(googleData.interests?.hobbies || []),
+          ],
+          publicActivities: [
+            ...(linkedInData.interests?.publicActivities || []),
+            ...(googleData.interests?.publicActivities || []),
+          ],
+        },
       };
+
+      return enrichedProfile;
+    } catch (error) {
+      console.error("Error enriching profile:", error);
+      throw new Error("Failed to enrich profile");
     }
-
-    // Parallel API calls for faster response
-    const [linkedInData, googleData] = await Promise.all([
-      this.searchLinkedIn(
-        customer.name,
-        customer.companyOwnership?.[0]?.companyName
-      ),
-      this.searchGoogle(customer.name, undefined),
-    ]);
-
-    // Merge results, preferring LinkedIn data for professional info
-    const enrichedProfile: EnrichmentResult = {
-      professional: {
-        currentRole: linkedInData.professional?.currentRole,
-        jobHistory: [
-          ...(linkedInData.professional?.jobHistory || []),
-          ...(googleData.professional?.jobHistory || []),
-        ],
-        education: [
-          ...(linkedInData.professional?.education || []),
-          ...(googleData.professional?.education || []),
-        ],
-        skills: [
-          ...(linkedInData.professional?.skills || []),
-          ...(googleData.professional?.skills || []),
-        ],
-        achievements: [
-          ...(linkedInData.professional?.achievements || []),
-          ...(googleData.professional?.achievements || []),
-        ],
-      },
-      social: {
-        linkedIn: linkedInData.social?.linkedIn,
-        twitter: googleData.social?.twitter,
-        github: googleData.social?.github,
-        other: googleData.social?.other,
-      },
-      interests: {
-        topics: [...(googleData.interests?.topics || [])],
-        hobbies: [...(googleData.interests?.hobbies || [])],
-        publicActivities: [...(googleData.interests?.publicActivities || [])],
-      },
-      basicInfo: {
-        name: customer.name,
-        currentLocation:
-          linkedInData.basicInfo?.currentLocation ||
-          googleData.basicInfo?.currentLocation,
-        profilePictureUrl:
-          linkedInData.basicInfo?.profilePictureUrl ||
-          googleData.basicInfo?.profilePictureUrl,
-        shortBio: googleData.basicInfo?.shortBio,
-      },
-      mediaPresence: {
-        newsArticles: [...(googleData.mediaPresence?.newsArticles || [])],
-        interviews: [...(googleData.mediaPresence?.interviews || [])],
-        publications: [...(googleData.mediaPresence?.publications || [])],
-      },
-    };
-
-    // Cache the result
-    await this.cacheEnrichmentResult(customer._id.toString(), enrichedProfile);
-
-    // Return enriched customer
-    return {
-      enrichedProfile,
-    };
   }
 }
-
-export const profileEnrichmentService = new ProfileEnrichmentService();

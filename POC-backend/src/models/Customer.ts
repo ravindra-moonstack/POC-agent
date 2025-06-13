@@ -189,96 +189,95 @@ const CustomerSchema = new Schema<ICustomer>(
 export const Customer = mongoose.model<ICustomer>("Customer", CustomerSchema);
 
 // // Sample customers data for seeding
-// export const sampleCustomers = [
-//   {
-//     customerId: "CUST006",
-//     name: "Elon Musk",
-//     email: "elon.musk@x.com",
-//     dateOfBirth: "1971-06-28",
-//     maritalStatus: "Divorced",
-//     familyDetails: {
-//       spouse: "Justine Musk  ",
-//       children: 10,
-//     },
-//     companyOwnership: [
-//       {
-//         companyName: "SpaceX",
-//         role: "Founder & CEO",
-//         ownershipPercentage: 42,
-//       },
-//       {
-//         companyName: "Tesla, Inc.",
-//         role: "CEO",
-//         ownershipPercentage: 13,
-//       },
-//     ],
-//   },
-//   {
-//     customerId: "CUST007",
-//     name: "Whitney Wolfe Herd",
-//     email: "whitney.wolfe@bumble.com",
-//     dateOfBirth: "1989-07-01",
-//     maritalStatus: "Married",
-//     familyDetails: {
-//       spouse: "Michael Herd",
-//       children: 1,
-//     },
-//     companyOwnership: [
-//       {
-//         companyName: "Bumble Inc.",
-//         role: "Founder & CEO",
-//         ownershipPercentage: 11.6,
-//       },
-//     ],
-//   },
-//   {
-//     customerId: "CUST008",
-//     name: "Brian Chesky",
-//     email: "brian.chesky@airbnb.com",
-//     dateOfBirth: "1981-08-29",
-//     maritalStatus: "Single",
-//     companyOwnership: [
-//       {
-//         companyName: "Airbnb, Inc.",
-//         role: "Co-Founder & CEO",
-//         ownershipPercentage: 14.6,
-//       },
-//     ],
-//   },
-//   {
-//     customerId: "CUST009",
-//     name: "Ritesh Agarwal",
-//     email: "ritesh.agarwal@oyorooms.com",
-//     dateOfBirth: "1993-11-16",
-//     maritalStatus: "Married",
-//     familyDetails: {
-//       spouse: "Geetansha Sood",
-//       children: 0,
-//     },
-//     companyOwnership: [
-//       {
-//         companyName: "OYO Rooms",
-//         role: "Founder & CEO",
-//         ownershipPercentage: 33,
-//       },
-//     ],
-//   },
-//   {
-//     customerId: "CUST010",
-//     name: "Anne Wojcicki",
-//     email: "anne.w@23andme.com",
-//     dateOfBirth: "1973-07-28",
-//     maritalStatus: "Divorced",
-//     familyDetails: {
-//       spouse: "Sergey Brin ",
-//       children: 2,
-//     },
-//     companyOwnership: [
-//       {
-//         companyName: "23andMe, Inc.",
-//         role: "Co-Founder & CEO",
-//         ownershipPercentage: 19,
-//       },
-//     ],
-//   },
-// ];
+export const sampleCustomers = [
+  {
+    customerId: "CUST011",
+    name: "Satya Nadella",
+    email: "satya.nadella@microsoft.com",
+    dateOfBirth: "1967-08-19",
+    maritalStatus: "Married",
+    familyDetails: {
+      spouse: "Anupama Nadella",
+      children: 3,
+    },
+    companyOwnership: [
+      {
+        companyName: "Microsoft Corporation",
+        role: "Chairman & CEO",
+        ownershipPercentage: 0.02,
+      },
+    ],
+  },
+  {
+    customerId: "CUST012",
+    name: "Shantanu Narayen",
+    email: "shantanu@adobe.com",
+    dateOfBirth: "1963-05-27",
+    maritalStatus: "Married",
+    familyDetails: {
+      spouse: "Reni Narayen",
+      children: 2,
+    },
+    companyOwnership: [
+      {
+        companyName: "Adobe Inc.",
+        role: "Chairman & CEO",
+        ownershipPercentage: 0.06,
+      },
+    ],
+  },
+  {
+    customerId: "CUST013",
+    name: "Susan Wojcicki",
+    email: "susan.w@youtube.com",
+    dateOfBirth: "1968-07-05",
+    maritalStatus: "Married",
+    familyDetails: {
+      spouse: "Dennis Troper",
+      children: 5,
+    },
+    companyOwnership: [
+      {
+        companyName: "YouTube (Google)",
+        role: "Former CEO",
+        ownershipPercentage: 0,
+      },
+    ],
+  },
+  {
+    customerId: "CUST014",
+    name: "Reed Hastings",
+    email: "reed.h@netflix.com",
+    dateOfBirth: "1960-10-08",
+    maritalStatus: "Married",
+    familyDetails: {
+      spouse: "Patty Quillin",
+      children: 2,
+    },
+    companyOwnership: [
+      {
+        companyName: "Netflix, Inc.",
+        role: "Co-Founder & Executive Chairman",
+        ownershipPercentage: 1.9,
+      },
+    ],
+  },
+  {
+    customerId: "CUST015",
+    name: "Lisa Su",
+    email: "lisa.su@amd.com",
+    dateOfBirth: "1969-11-07",
+    maritalStatus: "Married",
+    familyDetails: {
+      spouse: "Dan",
+      children: 0,
+    },
+    companyOwnership: [
+      {
+        companyName: "Advanced Micro Devices (AMD)",
+        role: "Chair & CEO",
+        ownershipPercentage: 0.9,
+      },
+    ],
+  },
+];
