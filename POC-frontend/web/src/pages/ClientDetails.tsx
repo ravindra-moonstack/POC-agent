@@ -218,7 +218,7 @@ const ClientDetails: React.FC = () => {
     mutationFn: async (customerId: string) => {
       if (!customer) throw new Error("Customer data not available");
       await customerService.updateCustomer(customerId, customer);
-      return customerService.enrichCustomerProfile(customerId);
+      return customerService.enrichCustomerProfile(customerId,customer);
     },
     onSuccess: (data) => {
       queryClient.setQueryData(['customer', id], data);

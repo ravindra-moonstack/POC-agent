@@ -140,7 +140,6 @@ export class ProfileEnrichmentService {
     if (!this.serpApiKey) {
       throw new Error("SERP API key not configured");
     }
-
     try {
       // Initialize enriched profile with basic info
       const enrichedProfile: EnrichedProfile = {
@@ -194,11 +193,13 @@ export class ProfileEnrichmentService {
     const companyQuery = profile.companyOwnership?.[0]?.companyName
       ? encodeURIComponent(profile.companyOwnership[0].companyName)
       : "";
-
+    const socialQuery = profile.familyDetails?.spouse
+      ? encodeURIComponent(profile.familyDetails.spouse)
+      : "";
     return {
       linkedin: `${nameQuery} ${companyQuery} site:linkedin.com/in/`,
       news: `${nameQuery} ${companyQuery} (interview OR article OR news OR press)`,
-      social: `${nameQuery} (site:twitter.com OR site:github.com OR site:instagram.com)`,
+      social: `${nameQuery} ${socialQuery}  (site:twitter.com OR site:github.com OR site:instagram.com or about relatives or about family)`,
       company: companyQuery
         ? `${companyQuery} company information funding`
         : "",
@@ -247,6 +248,7 @@ export class ProfileEnrichmentService {
       profile.social.linkedIn = {
         url: linkedInResult.link || "",
       };
+      console.log("linkedInResult", linkedInResult);
 
       // Parse title and company from LinkedIn headline
       const titleMatch = linkedInResult.title?.match(/^([^-]+) - ([^-]+)/);

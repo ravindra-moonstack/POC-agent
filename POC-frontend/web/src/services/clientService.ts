@@ -169,10 +169,14 @@ export const customerService = {
     }
   },
 
-  enrichCustomerProfile: async (customerId: string) => {
+  enrichCustomerProfile: async (
+    customerId: string,
+    customer: Partial<Customer>
+  ) => {
     try {
       const response = await api.post<Customer>(
-        `/api/profile/enrich/${customerId}`
+        `/api/profile/enrich/${customerId}`,
+        customer
       );
       return response.data;
     } catch (error) {

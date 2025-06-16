@@ -31,9 +31,14 @@ const customerProfileSchema = z.object({
     )
     .optional(),
 });
-
-router.post("/enrich", async (req, res) => {
-  console.log("req.body", req.body);
+router.get("/enrich", async (req, res) => {
+  console.log("req.body", req);
+  try {
+  } catch (error) {
+    console.error("Profile enrichment error:", error);
+  }
+});
+router.post("/enrich/:customerId", async (req, res) => {
   try {
     // Validate request body
     const validatedData = customerProfileSchema.parse(req.body);
