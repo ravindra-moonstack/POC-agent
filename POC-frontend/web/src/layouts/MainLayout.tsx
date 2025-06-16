@@ -23,6 +23,7 @@ const MainLayout: React.FC = () => {
     { text: 'Clients', icon: <PeopleIcon />, path: '/clients' },
     { text: 'Reports', icon: <DescriptionIcon />, path: '/reports' },
     { text: 'Profile', icon: <PersonIcon />, path: '/profile' },
+    { text: 'Chat', icon: <PersonIcon />, path: '/chat' },
   ];
 
   const handleDrawerToggle = () => {

@@ -203,7 +203,7 @@ export class ProfileEnrichmentService {
       company: companyQuery
         ? `${companyQuery} company information funding`
         : "",
-      wikipedia: `${nameQuery} ${companyQuery}`,
+      wikipedia: `${nameQuery}${companyQuery}`,
     };
   }
 
@@ -236,6 +236,7 @@ export class ProfileEnrichmentService {
     if (!query) return null;
     const url = `https://serpapi.com/search.json?engine=wikipedia&q=${query}&api_key=${this.serpApiKey}`;
     const response = await axios.get(url);
+    console.log("response data", response);
     return response.data.organic_results || [];
   }
 
