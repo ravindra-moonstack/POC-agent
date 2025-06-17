@@ -2,6 +2,7 @@ import { Express } from "express";
 import { authenticateJWT } from "../middleware/auth";
 import authRoutes from "../routes/auth";
 import customerRoutes from "../routes/customers";
+import ollamaRoutes from "../routes/ollama";
 import profileEnrichmentRoutes from "../routes/profileEnrichment";
 
 export const setupRoutes = (app: Express): void => {
@@ -13,7 +14,8 @@ export const setupRoutes = (app: Express): void => {
 
   // Mount profile enrichment routes
   app.use("/api/profile", profileEnrichmentRoutes);
-
+  app.use("/api/ollama", ollamaRoutes);
+  
   // Health check endpoint
   app.get("/health", (_, res) => res.status(200).json({ status: "ok" }));
 

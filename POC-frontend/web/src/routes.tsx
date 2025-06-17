@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import type { Message } from './pages/ChatPage';
-
+import { OllamaService } from './services/ollamaService';
 // Lazy load pages
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Clients = React.lazy(() => import('./pages/Clients'));
@@ -108,23 +108,37 @@ const AppRoutes = () => {
     }
   }, [])
 
-  const handleSendMessage = (text: string) => {
-    if (!text.trim() || !isConnected) return
+  const handleSendMessage = async (text: string) => {
+    if (!text.trim()) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
+    const userMessage: Message = {
+      id: Date.now().toString() + '-user',
       text,
       sender: "user",
       timestamp: new Date(),
-    }
+    };
+    setMessages((prev) => [...prev, userMessage]);
 
-    setMessages((prev) => [...prev, newMessage])
-
-    // Send to server via WebSocket
-    if (socketRef.current) {
-      socketRef.current.send(JSON.stringify(newMessage))
+    try {
+      const response = await OllamaService.sendMsg(text);
+      const llmText = response?.message?.content || response?.message || JSON.stringify(response);
+      const llmMessage: Message = {
+        id: Date.now().toString() + '-llm',
+        text: llmText,
+        sender: "other",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, llmMessage]);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: Date.now().toString() + '-error',
+        text: "Error: Could not get response from LLM.",
+        sender: "other",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     }
-  }
+  };
 
   const handleSendFile = async (file: File) => {
     if (!isConnected) return

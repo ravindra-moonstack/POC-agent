@@ -118,7 +118,7 @@ export default function ChatPage({ messages, onSendMessage, onSendFile, isConnec
         <div className="main-container">
           <div className="chat-wrapper">
             <ChatWindow messages={messages} />
-            <MessageInput onSendMessage={onSendMessage} onSendFile={onSendFile} disabled={!isConnected} />
+            <MessageInput onSendMessage={onSendMessage} onSendFile={onSendFile}  />
           </div>
         </div>
       </div>
